@@ -1,12 +1,4 @@
-const Twitter = require('twitter')
-
-// Boots Twitter client that sends oauth requests.
-const client = new Twitter({
-  consumer_key: process.env.TWITTER_KEY,
-  consumer_secret: process.env.TWITTER_SECRET,
-  access_token_key: tokens.access_token_key,
-  access_token_secret: tokens.access_token_secret
-})
+const OAuth = require('oauth').OAuth
 
 /**
  * Magic methods enum and their transformers.
@@ -15,46 +7,58 @@ const client = new Twitter({
  */
 const methods = {
   like: {
-    endpoint: _ => `favorites/create`,
+    endpoint: _ => `https://api.twitter.com/1.1/favorites/create.json`,
     params: id => ({ id })
   },
   retweet: {
-    endpoint: id => `statuses/retweet/${id}`,
-    params: _ => ({})
+    endpoint: id => `https://api.twitter.com/1.1/statuses/retweet/${id}.json`,
+    params: _ => null
   },
   follow: {
-    endpoint: _ => `friendships/create`,
+    endpoint: _ => `https://api.twitter.com/1.1/friendships/create.json`,
     params: id => ({ id, follow: true })
   }
 }
 
-exports.handler = async (event, _, callback) => {
+exports.handler = (event, _, callback) => {
   const tokens = event.requestContext.authorizer
+
+  const client = new OAuth(
+    'https://api.twitter.com/oauth/request_token',
+    'https://api.twitter.com/oauth/access_token',
+    process.env.TWITTER_KEY,
+    process.env.TWITTER_SECRET,
+    '1.0',
+    process.env.CALLBACK_URI,
+    'HMAC-SHA1'
+  )
 
   return Promise.resolve(event.body)
     // Parse the event body with JSON information.
     .then(JSON.parse)
-    .then(async ({ actions }) => {
+    .then(({ actions }) => {
+
       if (! actions || ! tokens) {
         throw ({ status: 422, error: 'MissingParameters' })
       }
 
-      const jobs = await Promise.all(actions.map(({ method, id }) => {
+      return Promise.all(actions.map(({ method, id }) => {
         let url = methods[method].endpoint(id)
         let params = methods[method].params(id)
 
         // Sends a request to certain method and based on status
         // code from the response decides if the action has been successful.
-        return sendRequest(client, url, params)
-          .then(() => ({ [method]: true }))
-          .catch(() => ({ [method]: false }))
+        return sendRequest(client, tokens, url, params)
+          .then(() => ({ method, success: true }))
+          .catch(() => ({ method, success: false }))
       }))
+        .then((jobs) => {
+          if (jobs.filter(job => job.success).length === actions.length) {
+            return ({ status: 200, body: '' })
+          }
 
-      if (jobs.filter(Boolean).length === actions.length) {
-        return ({ status: 200, body: '' })
-      }
-
-      return ({ status: 206, body: { result: jobs } })
+          return ({ status: 206, body: { result: jobs } })
+        })
     })
     .then(({ status, body }) => callback(null, {
       statusCode: status,
@@ -73,12 +77,19 @@ exports.handler = async (event, _, callback) => {
 }
 
 /**
- * @param {Twitter} client
+ * @param {OAuth} client
+ * @param {any} tokens
  * @param {string} url
  * @param {any} params
  */
-const sendRequest = (client, url, params) => {
+const sendRequest = (client, { access_token, access_token_secret }, url, params) => {
   return new Promise((resolve, reject) => {
-    client.post(url, params, error => console.log(url, params, error, error ? resolve() : reject()))
+    client.post(
+      url,
+      access_token,
+      access_token_secret,
+      params,
+      null,
+      error => error ? reject() : resolve())
   })
 }
