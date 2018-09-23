@@ -1,0 +1,8 @@
+{
+  "lambda": {
+    "role": "arn:aws:iam::365488455739:role/lambda_basic_execution",
+    "name": "stage-entry-methods",
+    "region": "eu-west-1",
+    "sharedRole": true
+  }
+}

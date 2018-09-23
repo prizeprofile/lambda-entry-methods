@@ -1,0 +1,24 @@
+{
+  "name": "lambda-entry-methods",
+  "version": "1.0.0",
+  "author": "Michael Bausano <bausanomichal@gmail.com>",
+  "license": "MIT",
+  "description": "Auto enters competitions.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prizeprofile/lambda-entry-methods"
+  },
+  "scripts": {
+    "create:stage": "claudia create --name stage-entry-methods --region eu-west-1 --handler index.handler --role arn:aws:iam::365488455739:role/lambda_basic_execution --config claudia-stage.json",
+    "create:prod": "claudia create --name prod-entry-methods --region eu-west-1 --handler index.handler --role arn:aws:iam::365488455739:role/lambda_basic_execution --config claudia-prod.json",
+    "deploy:stage": "claudia update --config claudia-stage.json",
+    "deploy:prod": "claudia update --config claudia-prod.json"
+  },
+  "dependencies": {
+    "twitter": "^1.7.1"
+  },
+  "devDependencies": {
+    "claudia": "^5.1.1"
+  }
+}
