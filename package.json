@@ -1,9 +1,9 @@
 {
   "name": "lambda-entry-methods",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Michael Bausano <bausanomichal@gmail.com>",
   "license": "MIT",
-  "description": "Auto enters competitions.",
+  "description": "Auto enters a competition.",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -16,6 +16,7 @@
     "deploy:prod": "claudia update --config claudia-prod.json"
   },
   "dependencies": {
+    "oauth": "^0.9.15",
     "twitter": "^1.7.1"
   },
   "devDependencies": {
