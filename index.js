@@ -16,7 +16,7 @@ const methods = {
   },
   follow: {
     endpoint: _ => `https://api.twitter.com/1.1/friendships/create.json`,
-    params: id => ({ id, follow: true })
+    params: id => ({ id })
   }
 }
 
