@@ -50,14 +50,19 @@ exports.handler = (event, _, callback) => {
         // code from the response decides if the action has been successful.
         return sendRequest(client, tokens, url, params)
           .then(() => ({ method, success: true }))
-          .catch(() => ({ method, success: false }))
+          .catch((error) => {
+            console.log(error)
+
+            return { method, success: false }
+          })
       }))
         .then((jobs) => {
           if (jobs.filter(job => job.success).length === actions.length) {
             return ({ status: 200, body: '' })
           }
 
-          return ({ status: 206, body: { result: jobs } })
+          //return ({ status: 206, body: { result: jobs } })
+          return ({ status: 500 })
         })
     })
     .then(({ status, body }) => callback(null, {
@@ -90,6 +95,6 @@ const sendRequest = (client, { access_token, access_token_secret }, url, params)
       access_token_secret,
       params,
       null,
-      error => error ? reject() : resolve())
+      error => error ? reject(error) : resolve())
   })
 }
