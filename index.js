@@ -61,8 +61,11 @@ exports.handler = (event, _, callback) => {
             return ({ status: 200, body: '' })
           }
 
-          //return ({ status: 206, body: { result: jobs } })
-          return ({ status: 500 })
+          if (jobs.filter(job => job.success).length === 0) {
+            return ({ status: 500 })
+          }
+
+          return ({ status: 206, body: { result: jobs } })
         })
     })
     .then(({ status, body }) => callback(null, {
